@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RECEBE CERTO — Recebimento e Etiquetas FIFO/PEPS</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.1/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+
+    <!-- Container Principal -->
+    <div id="app-shell" class="min-h-screen flex flex-col lg:flex-row">
+
+        <!-- ===================================================================== -->
+        <!-- MENU LATERAL -->
+        <!-- ===================================================================== -->
+        <aside id="app-sidebar" class="app-sidebar bg-slate-900 text-white flex flex-col justify-between shadow-xl" aria-label="Menu principal" aria-hidden="true">
+            <div>
+                <!-- Identidade Visual -->
+                <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-600/30">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg tracking-tight leading-tight">RECEBE CERTO</h1>
+                        <p class="text-xs text-slate-400">Recebimento &amp; FIFO/PEPS</p>
+                    </div>
+                </div>
+
+                <!-- Navegação principal -->
+                <nav class="px-4 py-3 space-y-1.5">
+                    <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Menu</p>
+
+                    <button id="nav-dashboard" onclick="switchTab('dashboard')"
+                            class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium transition-all bg-blue-600 text-white shadow-md shadow-blue-900/40 cursor-pointer">
+                        <span class="flex items-center gap-3">
+                            <i class="fa-solid fa-chart-pie w-4 text-center"></i>
+                            <span>Painel</span>
+                        </span>
+                    </button>
+
+                    <!-- Aba 1: Imputar Nota -->
+                    <button id="nav-imputar" onclick="switchTab('imputar')"
+                            class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer">
+                        <span class="flex items-center gap-3">
+                            <i class="fa-solid fa-file-invoice w-4 text-center"></i>
+                            <span>1. Nota Fiscal</span>
+                        </span>
+                        <span id="badge-imputar" class="bg-blue-800 text-blue-100 text-xs font-bold px-2 py-0.5 rounded-full">2</span>
+                    </button>
+
+                    <!-- Aba 2: Conferência Cega -->
+                    <button id="nav-conferencia" onclick="switchTab('conferencia')"
+                            class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer">
+                        <span class="flex items-center gap-3">
+                            <i class="fa-solid fa-barcode w-4 text-center"></i>
+                            <span>2. Conferir</span>
+                        </span>
+                        <span id="badge-conferencia" class="bg-slate-700 text-slate-200 text-xs font-bold px-2 py-0.5 rounded-full">0/3</span>
+                    </button>
+
+                    <!-- Aba 3: Etiquetas (FIFO/PEPS) -->
+                    <button id="nav-etiquetas" onclick="switchTab('etiquetas')"
+                            class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer">
+                        <span class="flex items-center gap-3">
+                            <i class="fa-solid fa-tags w-4 text-center"></i>
+                            <span>3. Etiquetas</span>
+                        </span>
+                        <span id="badge-etiquetas" class="bg-slate-700 text-slate-200 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Legenda da Regra Mieruka (FIFO/PEPS) -->
+            <div class="p-4 m-4 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs space-y-2.5">
+                <div class="font-semibold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-traffic-light text-blue-400"></i>
+                    <span>Regra FIFO / PEPS</span>
+                </div>
+                <div class="flex items-center justify-between text-slate-300">
+                    <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Até 30 dias</span>
+                    <span class="text-red-400 font-semibold">Vermelho</span>
+                </div>
+                <div class="flex items-center justify-between text-slate-300">
+                    <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> 31 a 90 dias</span>
+                    <span class="text-amber-400 font-semibold">Amarelo</span>
+                </div>
+                <div class="flex items-center justify-between text-slate-300">
+                    <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> &gt; 90 dias</span>
+                    <span class="text-emerald-400 font-semibold">Verde</span>
+                </div>
+            </div>
+        </aside>
+        <button id="menu-backdrop" class="hidden" type="button" aria-label="Fechar menu" tabindex="-1" onclick="closeAppMenu()"></button>
+
+        <!-- ===================================================================== -->
+        <!-- ÁREA PRINCIPAL DE CONTEÚDO                                            -->
+        <!-- ===================================================================== -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+            <!-- Cabeçalho Superior -->
+            <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center gap-3">
+                <button id="menu-toggle" type="button" onclick="toggleAppMenu()" aria-label="Abrir menu" aria-controls="app-sidebar" aria-expanded="false"
+                        class="w-10 h-10 rounded-lg text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-bars text-xl" aria-hidden="true"></i>
+                </button>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">RECEBE CERTO</h1>
+                <button id="header-fullscreen" type="button" onclick="toggleAppFullscreen()"
+                        class="ml-auto w-10 h-10 rounded-lg text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                        aria-label="Entrar em tela cheia" title="Entrar em tela cheia">
+                    <i id="header-fullscreen-icon" class="fa-solid fa-expand text-lg" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <!-- Container de Notificações Toast -->
+            <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+            <!-- ===================================================================== -->
+            <!-- ABA 0: PAINEL PRINCIPAL -->
+            <!-- ===================================================================== -->
+            <section id="tab-dashboard" class="flex-1 overflow-hidden" aria-label="Painel principal">
+                <iframe
+                    id="tcc-dashboard-frame"
+                    class="dashboard-frame"
+                    title="Dashboard atualizado"
+                    src="Dashboard_TCC_2026 (1)/index.html"
+                    loading="eager">
+                </iframe>
+            </section>
+
+            <!-- ===================================================================== -->
+            <!-- ABA 1: IMPUTAR NOTA (ENTRADA FISCAL / PRÉ-RECEBIMENTO)                -->
+            <!-- ===================================================================== -->
+            <section id="tab-imputar" class="hidden flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+                <div class="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+
+                    <!-- COLUNA ESQUERDA: FORMULÁRIO DE CADASTRO DE NF-e -->
+                    <div class="xl:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm">
+                                    <i class="fa-solid fa-file-circle-plus"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-sm">Lançar Nota Fiscal</h3>
+                                    <p class="text-[11px] text-slate-500">Informe a nota e os produtos recebidos</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-6 space-y-5">
+                            <div class="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 space-y-3">
+                                <div>
+                                    <h4 class="text-xs font-extrabold text-slate-800">Carregar Nota Fiscal</h4>
+                                    <p class="mt-1 text-[11px] leading-relaxed text-slate-500">
+                                        Selecione uma imagem da nota. O OCR em português é executado no navegador; na primeira leitura, o idioma precisa ser baixado.
+                                    </p>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <label for="nf-file-input" class="inline-flex items-center gap-2 rounded-xl bg-white border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:border-blue-400 hover:text-blue-700 cursor-pointer transition">
+                                        <i class="fa-solid fa-upload"></i>
+                                        <span>Escolher arquivo</span>
+                                    </label>
+                                    <input id="nf-file-input" type="file" accept="image/*" class="sr-only" onchange="handleInvoiceFileSelection(this)">
+                                    <button type="button" onclick="loadSampleInvoice()" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 transition">
+                                        <i class="fa-solid fa-file-import"></i>
+                                        <span>Carregar nota fictícia</span>
+                                    </button>
+                                </div>
+                                <div id="nf-upload-preview-container" class="hidden overflow-hidden rounded-xl border border-slate-200 bg-white">
+                                    <div id="nf-upload-file-name" class="border-b border-slate-100 px-3 py-2 text-[11px] font-semibold text-slate-600"></div>
+                                    <img id="nf-upload-image-preview" class="hidden max-h-80 w-full object-contain p-2" alt="Pré-visualização da Nota Fiscal carregada">
+                                    <p id="nf-reading-status" class="border-t border-slate-100 px-3 py-2 text-[11px] text-slate-500" aria-live="polite"></p>
+                                    <details class="border-t border-slate-100 px-3 py-2">
+                                        <summary class="cursor-pointer text-[11px] font-bold text-slate-600">Texto reconhecido (revisar)</summary>
+                                        <pre id="nf-ocr-text" class="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-[10px] text-slate-500"></pre>
+                                    </details>
+                                </div>
+                            </div>
+
+                            <!-- Dados do Cabeçalho da Nota Fiscal -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <div>
+                                    <label for="nf-number" class="block text-xs font-bold text-slate-700 mb-1">
+                                        Número da NF-e <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" id="nf-number" placeholder="Ex: NF-45915"
+                                           class="w-full text-sm font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white">
+                                </div>
+                                <div>
+                                    <label for="nf-date" class="block text-xs font-bold text-slate-700 mb-1">
+                                        Data de Emissão <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="date" id="nf-date"
+                                           class="w-full text-sm font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label for="nf-supplier" class="block text-xs font-bold text-slate-700 mb-1">
+                                        Fornecedor <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" id="nf-supplier" placeholder="Ex: Nestlé Brasil Ltda"
+                                           class="w-full text-sm font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white">
+                                </div>
+                            </div>
+
+                            <!-- Bloco Adicionar Itens à NF -->
+                            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Adicionar Produtos à NF</span>
+                                    <button type="button" onclick="toggleCustomNfProduct()" id="btn-toggle-custom-nf"
+                                            class="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer">
+                                        + Digitar EAN avulso
+                                    </button>
+                                </div>
+
+                                <!-- Seletor de Produto do Catálogo -->
+                                <div id="nf-catalog-selector">
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Produto do Catálogo:</label>
+                                    <select id="nf-product-select"
+                                            class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                        <option value="06512943780243">06512943780243 — Nescau 350g</option>
+                                        <option value="7891000100103">7891000100103 — Leite Moça 395g</option>
+                                        <option value="7896089011357">7896089011357 — Café Pilão 500g</option>
+                                        <option value="7896004006214">7896004006214 — Biscoito Cream Cracker 400g</option>
+                                        <option value="7896006711112">7896006711112 — Arroz Tipo 1 5kg</option>
+                                    </select>
+                                </div>
+
+                                <!-- Campos para Produto Avulso (Oculto por padrão) -->
+                                <div id="nf-custom-product-fields" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Código EAN:</label>
+                                        <input type="text" id="nf-custom-ean" placeholder="Ex: 7891234567890"
+                                               class="w-full text-xs font-mono bg-white border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Nome do Produto:</label>
+                                        <input type="text" id="nf-custom-name" placeholder="Ex: Açúcar União 1kg"
+                                               class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                    </div>
+                                </div>
+
+                                <!-- Quantidade na Nota + Botão Adicionar -->
+                                <div class="flex items-end gap-2.5">
+                                    <div class="flex-1">
+                                        <label for="nf-item-qty" class="block text-xs font-semibold text-slate-700 mb-1">Quantidade na nota (unidades):</label>
+                                        <input type="number" id="nf-item-qty" min="1" step="1" inputmode="numeric" placeholder="Ex: 20"
+                                               class="w-full text-sm font-bold bg-white border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                    </div>
+                                    <button type="button" onclick="addDraftNfItem()"
+                                            class="bg-slate-900 hover:bg-blue-600 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer shrink-0">
+                                        <i class="fa-solid fa-plus"></i>
+                                        <span>Incluir Item</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Lista Dinâmica dos Itens Adicionados ao Rascunho da NF -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold text-slate-700">Itens desta Nota Fiscal:</span>
+                                    <span id="draft-items-count" class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">0 itens</span>
+                                </div>
+
+                                <div id="draft-nf-items-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                    <div class="text-center py-6 border-2 border-dashed border-slate-200 rounded-xl text-xs text-slate-400">
+                                        Nenhum item incluído nesta NF ainda.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botão Salvar / Lançar NF para Conferência -->
+                            <button type="button" onclick="saveNewInvoice()"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-sm py-3 rounded-xl shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Lançar Nota Fiscal para Conferência</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- COLUNA DIREITA: NOTAS FISCAIS IMPUTADAS NO SISTEMA -->
+                    <div class="xl:col-span-7 space-y-5">
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-start gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i class="fa-solid fa-folder-open text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">Notas Fiscais Imputadas no Sistema</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                                        Clique sobre uma Nota Fiscal para expandir e auditar os itens fiscais lançados, ou avance diretamente para a <strong>Conferência Cega</strong> no celular do operador.
+                                    </p>
+                                </div>
+                            </div>
+                            <button onclick="switchTab('conferencia')" class="shrink-0 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 cursor-pointer">
+                                <span>Ir para Conferência</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+
+                        <!-- Lista de Cards das Notas Fiscais -->
+                        <div id="invoices-list-container" class="space-y-4">
+                            <!-- Renderizado via JavaScript -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ===================================================================== -->
+            <!-- ABA 2: CONFERÊNCIA CEGA (CELULAR PROGRESSIVO + GESTÃO À DIREITA)      -->
+            <!-- ===================================================================== -->
+            <section id="tab-conferencia" class="hidden flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+                <div class="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+
+                    <!-- COLUNA ESQUERDA: MOCKUP REALISTA DE SMARTPHONE (FLUXO PROGRESSIVO) -->
+                    <div class="xl:col-span-5 flex flex-col items-center">
+                        <div class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            <i class="fa-solid fa-mobile-screen-button text-blue-600"></i>
+                            <span>Tela 1 — App do Operador (Conferência Cega)</span>
+                        </div>
+
+                        <!-- Moldura do Smartphone -->
+                        <div class="w-full max-w-[365px] bg-slate-900 rounded-[44px] p-3.5 shadow-2xl border-[4px] border-slate-800 relative">
+                            <!-- Notch -->
+                            <div class="w-32 h-5 bg-slate-900 rounded-b-2xl mx-auto absolute top-3.5 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center gap-2">
+                                <span class="w-10 h-1 bg-slate-700 rounded-full"></span>
+                                <span class="w-2 h-2 bg-slate-700 rounded-full"></span>
+                            </div>
+
+                            <!-- Tela Interna do Celular -->
+                            <div class="bg-[#eef4fa] rounded-[34px] overflow-hidden flex flex-col h-[700px] relative">
+
+                                <!-- Status Bar -->
+                                <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-700">
+                                    <span>09:41</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fa-solid fa-wifi"></i>
+                                        <i class="fa-solid fa-battery-three-quarters text-sm"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Conteúdo Rolável do App -->
+                                <div class="phone-screen flex-1 overflow-y-auto px-4 pb-5 pt-2 space-y-3">
+
+                                    <!-- ========================================================= -->
+                                    <!-- PASSO 1: ESCOLHER NOTA FISCAL (SEMPRE VISÍVEL NO TOPO)    -->
+                                    <!-- ========================================================= -->
+                                    <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/90">
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <label for="mobile-select-nf" class="text-[11px] font-extrabold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
+                                                <span class="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] inline-flex items-center justify-center">1</span>
+                                                <span>Escolher Nota Fiscal (NF-e)</span>
+                                            </label>
+                                            <span id="mobile-nf-progress-pill" class="hidden text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                                                Item 1 de 2
+                                            </span>
+                                        </div>
+
+                                        <select id="mobile-select-nf" onchange="handleMobileNfChange(this.value)"
+                                                class="w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer">
+                                            <option value="">— Selecione uma Nota Fiscal —</option>
+                                        </select>
+
+                                        <div id="mobile-nf-supplier-bar" class="hidden mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                                            <span id="mobile-nf-supplier-name" class="font-semibold truncate"></span>
+                                            <button type="button" onclick="resetMobileNfSelection()" class="text-blue-600 font-bold hover:underline shrink-0 ml-2 cursor-pointer">
+                                                Trocar NF
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- ESTADO INICIAL: AGUARDANDO ESCOLHA DA NOTA FISCAL -->
+                                    <div id="mobile-step-empty-state" class="bg-white/80 rounded-2xl p-6 border border-dashed border-slate-300 text-center space-y-3 my-4">
+                                        <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto">
+                                            <i class="fa-solid fa-file-invoice"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-slate-800 text-sm">Aguardando Seleção da NF</h4>
+                                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                                                Escolha acima uma <strong>Nota Fiscal</strong> imputada para liberar a bipagem dos produtos e a conferência cega.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- ESTADO DE NF CONCLUÍDA NO CELULAR -->
+                                    <div id="mobile-step-completed-state" class="hidden step-reveal bg-white rounded-2xl p-6 border border-emerald-200 text-center space-y-3 my-4 shadow-sm">
+                                        <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mx-auto">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-extrabold text-slate-800 text-base">Nota Fiscal Conferida!</h4>
+                                            <p id="mobile-completed-nf-text" class="text-xs text-slate-500 mt-1 leading-relaxed"></p>
+                                        </div>
+                                        <div class="pt-2 flex flex-col gap-2">
+                                            <button type="button" onclick="switchTab('etiquetas')"
+                                                    class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 rounded-xl transition cursor-pointer">
+                                                Ver Etiquetas Geradas (FIFO)
+                                            </button>
+                                            <button type="button" onclick="resetMobileNfSelection()"
+                                                    class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 rounded-xl transition cursor-pointer">
+                                                Selecionar Outra Nota Fiscal
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- ========================================================= -->
+                                    <!-- PASSO 2: LIBERADO APÓS ESCOLHER A NOTA FISCAL             -->
+                                    <!-- ========================================================= -->
+                                    <div id="mobile-step-2-container" class="hidden step-reveal space-y-3">
+
+                                        <!-- Leitura pela câmera, EAN manual e itens pendentes da NF -->
+                                        <div class="bg-white rounded-2xl p-2.5 shadow-sm border border-slate-200/80">
+                                            <div class="flex items-center gap-2.5">
+                                                <button type="button" onclick="toggleBarcodeScanner()" title="Ler código com a câmera" aria-label="Ler código com a câmera" aria-pressed="false"
+                                                        class="w-14 h-14 rounded-xl bg-slate-900 hover:bg-blue-600 active:scale-95 text-white flex flex-col items-center justify-center shrink-0 transition cursor-pointer shadow-md group">
+                                                    <i class="fa-solid fa-camera text-xl group-hover:scale-110 transition-transform"></i>
+                                                    <span id="barcode-scanner-button-label" class="text-[9px] font-semibold mt-0.5 uppercase tracking-tighter">Câmera</span>
+                                                </button>
+
+                                                <div id="scanner-box" class="flex-1 h-14 bg-[#d6c3a5] rounded-xl border border-amber-900/20 flex flex-col items-center justify-center relative overflow-hidden px-2 transition-all">
+                                                    <video id="barcode-scanner-video" class="hidden scanner-video" autoplay muted playsinline aria-label="Imagem da câmera para leitura de código"></video>
+                                                    <span id="barcode-scanner-status" class="hidden scanner-status">Aponte a câmera para o código de barras</span>
+                                                    <svg id="barcode-visual-svg" class="phone-barcode max-w-full" aria-label="Prévia do código de barras"></svg>
+                                                    <span id="barcode-visual-digits" class="text-[10px] font-mono font-bold text-slate-900 -mt-2 tracking-widest">06512943780243</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Input EAN ou Atalho para Itens Pendentes da NF Selecionada -->
+                                            <div class="mt-2.5">
+                                                <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Bipar / Digitar Código de Barras (EAN):</label>
+                                                <div class="flex gap-1.5">
+                                                    <input type="text" id="input-barcode"
+                                                           oninput="handleBarcodeInput(this.value)"
+                                                           placeholder="Digite o EAN..."
+                                                           class="w-full text-xs font-mono font-semibold bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <select id="select-nf-pending-item" onchange="selectNfPendingItem(this.value)" title="Itens pendentes desta NF"
+                                                            class="bg-blue-50 border border-blue-200 rounded-lg px-2 text-xs font-bold text-blue-800 focus:outline-none max-w-[125px] cursor-pointer">
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Card do Produto Identificado -->
+                                        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80">
+                                            <div class="flex items-center gap-3.5">
+                                                <div id="product-icon-box" class="w-14 h-14 rounded-2xl bg-slate-900 flex flex-col items-center justify-center shrink-0 text-white shadow-inner overflow-hidden">
+                                                    <i class="fa-solid fa-box text-xl text-blue-400"></i>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex items-center gap-1.5 mb-0.5">
+                                                        <span id="product-nf-match-badge" class="inline-block text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+                                                            Item da NF
+                                                        </span>
+                                                    </div>
+                                                    <h3 id="product-name-display" class="font-extrabold text-slate-900 text-base leading-tight truncate">—</h3>
+                                                    <p id="product-category-display" class="text-xs text-slate-500 truncate">Aguardando bipagem</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Formulário de Conferência Cega & Trava Poka-Yoke -->
+                                        <div id="poka-yoke-form" class="bg-[#cfd7e3] rounded-2xl p-3.5 space-y-3 shadow-inner border border-slate-300/80">
+
+                                            <!-- Campo 1: Quantidade na Nota (CEGUEIRA TOTAL GARANTIDA - IMPUTADO NA ABA 1) -->
+                                            <div>
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <label class="text-xs font-bold text-slate-800">Quantidade na nota:</label>
+                                                    <span class="text-[10px] font-bold text-slate-600 flex items-center gap-1">
+                                                        <i class="fa-solid fa-eye-slash"></i> Cegueira ativa
+                                                    </span>
+                                                </div>
+                                                <div class="w-full bg-slate-200/95 text-slate-500 font-bold text-xs rounded-lg px-3 py-2 border border-slate-300 cursor-not-allowed select-none flex items-center justify-between">
+                                                    <span>•••• Oculto na conferência</span>
+                                                    <i class="fa-solid fa-lock text-[10px] text-slate-400"></i>
+                                                </div>
+                                            </div>
+
+                                            <!-- Campo 2: Quantidade na Caixa (Contagem Física Obrigatória) -->
+                                            <div>
+                                                <label for="input-qty-caixa" class="block text-xs font-bold text-slate-800 mb-1">
+                                                    Unidades recebidas: <span class="text-red-600">*</span>
+                                                </label>
+                                                <input type="number" id="input-qty-caixa" min="1" step="1" inputmode="numeric" placeholder="Digite a contagem física"
+                                                       oninput="clearFieldError('input-qty-caixa')"
+                                                       class="w-full bg-white text-slate-900 font-bold text-sm rounded-lg px-3 py-1.5 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+                                            </div>
+
+                                            <!-- Campo 3: Quantidade Defeito -->
+                                            <div>
+                                                <label for="input-qty-defeito" class="block text-xs font-bold text-slate-800 mb-1">Unidades com defeito:</label>
+                                                <input type="number" id="input-qty-defeito" min="0" step="1" inputmode="numeric" value="0"
+                                                       oninput="updateDefectObservationVisibility(this.value); clearFieldError('input-qty-defeito')"
+                                                       class="w-full bg-white text-slate-900 font-bold text-sm rounded-lg px-3 py-1.5 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                            </div>
+
+                                            <div id="defect-observation-container" class="hidden">
+                                                <label for="input-defect-observation" class="block text-xs font-bold text-slate-800 mb-1">
+                                                    Observação do defeito:
+                                                </label>
+                                                <textarea id="input-defect-observation" rows="2" maxlength="500"
+                                                          placeholder="Descreva o defeito encontrado"
+                                                          class="w-full resize-y bg-white text-slate-900 text-sm rounded-lg px-3 py-2 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
+                                            </div>
+
+                                            <!-- Campo 4: Validade (Obrigatório, sem botões de atalho) -->
+                                            <div>
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <label for="input-validade" class="text-xs font-bold text-slate-800">
+                                                        Validade: <span class="text-red-600">*</span>
+                                                    </label>
+                                                    <span class="text-[10px] font-bold text-slate-700 bg-white/70 px-1.5 py-0.5 rounded border border-slate-300/80">
+                                                        <i class="fa-solid fa-lock text-[9px] text-slate-600"></i> Obrigatório
+                                                    </span>
+                                                </div>
+                                                <input type="date" id="input-validade"
+                                                       onchange="clearFieldError('input-validade')"
+                                                       class="w-full bg-white text-slate-900 font-bold text-sm rounded-lg px-3 py-1.5 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+                                            </div>
+
+                                            <!-- Alerta da Trava Poka-Yoke -->
+                                            <div id="poka-yoke-alert" class="hidden bg-red-600 text-white text-[11px] font-semibold px-3 py-2 rounded-xl flex items-start gap-2 shadow-md">
+                                                <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i>
+                                                <span>Trava Poka-Yoke: Preencha a validade e a quantidade física antes de avançar</span>
+                                            </div>
+
+                                            <!-- Botões Inferiores: Encerrar como devolvido ou aceitar -->
+                                            <div class="grid grid-cols-2 gap-2.5 pt-1">
+                                                <button type="button" onclick="processConference('Devolvido')"
+                                                        class="bg-[#ef4444] hover:bg-red-600 active:scale-95 text-white font-bold text-sm py-2.5 rounded-xl shadow-md transition cursor-pointer">
+                                                    Registrar devolução
+                                                </button>
+                                                <button type="button" onclick="processConference('Aceito')"
+                                                        class="bg-[#65d65c] hover:bg-emerald-500 active:scale-95 text-white font-bold text-sm py-2.5 rounded-xl shadow-md transition cursor-pointer">
+                                                    Aceitar produto
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUNA DIREITA: VISÃO DE GESTÃO EM TEMPO REAL -->
+                    <div class="xl:col-span-7 space-y-6">
+
+                        <!-- Card Informativo do Fluxo -->
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div class="flex items-start gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i class="fa-solid fa-shield-halved text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">Visão de Gestão — Auditoria NF vs. Contagem Física</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                                        Enquanto o operador vê apenas <strong>"•••• Oculto na conferência"</strong> no celular, a gestão compara automaticamente a quantidade imputada na Nota Fiscal com a contagem física.
+                                    </p>
+                                </div>
+                            </div>
+                            <button onclick="switchTab('etiquetas')" class="shrink-0 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-sm cursor-pointer">
+                                <span>Fila de Etiquetas</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+
+                        <!-- 4 Cards de KPIs -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <span class="text-xs font-medium text-slate-500">Total Conferido</span>
+                                <div class="mt-1 flex items-baseline justify-between">
+                                    <span id="kpi-total" class="text-2xl font-extrabold text-slate-800">0</span>
+                                    <span class="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Itens</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <span class="text-xs font-medium text-slate-500">Divergências Detectadas</span>
+                                <div class="mt-1 flex items-baseline justify-between">
+                                    <span id="kpi-divergencias" class="text-2xl font-extrabold text-amber-600">0</span>
+                                    <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">NF x Físico</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <span class="text-xs font-medium text-slate-500">Avarias / Devoluções</span>
+                                <div class="mt-1 flex items-baseline justify-between">
+                                    <span id="kpi-devolvidos" class="text-2xl font-extrabold text-red-600">0</span>
+                                    <span class="text-[11px] font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded-full">Ocorrências</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <span class="text-xs font-medium text-slate-500">NFs Concluídas</span>
+                                <div class="mt-1 flex items-baseline justify-between">
+                                    <span id="kpi-nfs-concluidas" class="text-2xl font-extrabold text-emerald-600">0</span>
+                                    <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Finalizadas</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabela Gerencial Comparativa em Tempo Real -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-table-list text-blue-600"></i>
+                                    <span>Confronto Fiscal x Físico em Tempo Real</span>
+                                </h4>
+                                <span class="text-xs text-slate-400">Sincronizado com o coletor</span>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                                            <th class="py-3 px-3">Nota Fiscal</th>
+                                            <th class="py-3 px-3">Produto</th>
+                                            <th class="py-3 px-2.5 text-center">Qtd. Nota</th>
+                                            <th class="py-3 px-2.5 text-center">Qtd. Física</th>
+                                            <th class="py-3 px-2.5 text-center">Defeito</th>
+                                            <th class="py-3 px-2.5 text-center">Divergência</th>
+                                            <th class="py-3 px-2.5">Validade</th>
+                                            <th class="py-3 px-3 text-right">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="conference-table-body" class="divide-y divide-slate-100 text-xs">
+                                        <!-- Preenchido dinamicamente via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ===================================================================== -->
+            <!-- ABA 3: FILA DE ETIQUETAS POR COR FIFO/PEPS (GESTÃO + CELULAR TELA 2)  -->
+            <!-- ===================================================================== -->
+            <section id="tab-etiquetas" class="hidden flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+                <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8 items-start">
+
+                    <!-- COLUNA ESQUERDA: GESTÃO DE ETIQUETAS & IMPRESSÃO -->
+                    <div class="lg:col-span-7 min-w-0 space-y-6">
+
+                        <!-- Cabeçalho de Impressão e Filtros por Cor FIFO -->
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">Fila de Etiquetas &amp; Cálculo Automático (FIFO/PEPS)</h3>
+                                    <p class="text-xs text-slate-500">Classificação calculada a partir da validade informada. Clique em um item para visualizar no celular.</p>
+                                </div>
+                                <button onclick="openPrintModal(null)"
+                                        class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md shadow-blue-600/20 transition flex items-center gap-2 cursor-pointer">
+                                    <i class="fa-solid fa-print"></i>
+                                    <span>Imprimir Fila Selecionada</span>
+                                </button>
+                            </div>
+
+                            <!-- Cards de Resumo por Cor (Lotes e Caixas) + Filtro -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100">
+                                <!-- Todas -->
+                                <button onclick="filterLabels('all')" id="filter-all"
+                                        class="p-3 rounded-xl border text-left transition bg-slate-800 text-white border-slate-800 cursor-pointer">
+                                    <span class="text-[11px] font-bold uppercase tracking-wider opacity-80 block">Todas as Cores</span>
+                                    <div class="mt-1 font-extrabold text-base"><span id="count-all-lotes">0</span> lotes</div>
+                                    <span class="text-[11px] opacity-80"><span id="count-all-caixas">0</span> unidades aproveitáveis</span>
+                                </button>
+
+                                <!-- Vermelho <= 30 dias -->
+                                <button onclick="filterLabels('red')" id="filter-red"
+                                        class="p-3 rounded-xl border text-left transition bg-red-50 text-red-900 border-red-200 hover:bg-red-100 cursor-pointer">
+                                    <div class="flex items-center gap-1.5 text-[11px] font-bold">
+                                        <span class="text-red-600">●</span><span>Vermelha (até 30 dias)</span>
+                                    </div>
+                                    <div class="mt-1 font-extrabold text-base text-red-700"><span id="count-red-lotes">0</span> lotes</div>
+                                    <span class="text-[11px] text-red-700/80"><span id="count-red-caixas">0</span> unidades</span>
+                                </button>
+
+                                <!-- Amarelo 31 a 90 dias -->
+                                <button onclick="filterLabels('yellow')" id="filter-yellow"
+                                        class="p-3 rounded-xl border text-left transition bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100 cursor-pointer">
+                                    <div class="flex items-center gap-1.5 text-[11px] font-bold">
+                                        <span class="text-amber-500">●</span><span>Amarela (31 a 90 dias)</span>
+                                    </div>
+                                    <div class="mt-1 font-extrabold text-base text-amber-800"><span id="count-yellow-lotes">0</span> lotes</div>
+                                    <span class="text-[11px] text-amber-800/80"><span id="count-yellow-caixas">0</span> unidades</span>
+                                </button>
+
+                                <!-- Verde > 90 dias -->
+                                <button onclick="filterLabels('green')" id="filter-green"
+                                        class="p-3 rounded-xl border text-left transition bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100 cursor-pointer">
+                                    <div class="flex items-center gap-1.5 text-[11px] font-bold">
+                                        <span class="text-emerald-600">●</span><span>Verde (mais de 90 dias)</span>
+                                    </div>
+                                    <div class="mt-1 font-extrabold text-base text-emerald-700"><span id="count-green-lotes">0</span> lotes</div>
+                                    <span class="text-[11px] text-emerald-700/80"><span id="count-green-caixas">0</span> unidades</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tabela Interativa de Etiquetas Geradas -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-layer-group text-blue-600"></i>
+                                    <span>Etiquetas Geradas por Prioridade de Vencimento</span>
+                                </h4>
+                                <span class="text-xs text-slate-400">Clique no lote para ver no celular</span>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                                            <th class="py-3 px-4">Produto / NF</th>
+                                            <th class="py-3 px-3">Validade</th>
+                                            <th class="py-3 px-3">Dias Restantes</th>
+                                            <th class="py-3 px-3">Cor FIFO</th>
+                                            <th class="py-3 px-3 text-center">Unidades boas</th>
+                                            <th class="py-3 px-4 text-right">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="labels-table-body" class="divide-y divide-slate-100 text-xs">
+                                        <!-- Preenchido dinamicamente via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUNA DIREITA: SIMULADOR CELULAR TELA 2 -->
+                    <div class="lg:col-span-5 min-w-0 flex flex-col items-center lg:sticky lg:top-4">
+                        <div class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            <i class="fa-solid fa-mobile-screen-button text-blue-600"></i>
+                            <span>Tela 2 — Etiquetagem no Celular do Operador</span>
+                        </div>
+
+                        <!-- Moldura Realista do Smartphone -->
+                        <div class="w-full max-w-[365px] bg-slate-900 rounded-[44px] p-3.5 shadow-2xl border-[4px] border-slate-800 relative">
+                            <!-- Notch -->
+                            <div class="w-32 h-5 bg-slate-900 rounded-b-2xl mx-auto absolute top-3.5 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center gap-2">
+                                <span class="w-10 h-1 bg-slate-700 rounded-full"></span>
+                                <span class="w-2 h-2 bg-slate-700 rounded-full"></span>
+                            </div>
+
+                            <!-- Tela Interna do Celular -->
+                            <div class="bg-[#eef4fa] rounded-[34px] overflow-hidden flex flex-col h-[700px] relative">
+
+                                <!-- Status Bar -->
+                                <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-700">
+                                    <span>09:45</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fa-solid fa-wifi"></i>
+                                        <i class="fa-solid fa-battery-full text-sm"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Conteúdo Dinâmico da Tela 2 -->
+                                <div id="phone-screen-2-content" class="phone-screen flex-1 overflow-y-auto px-4 pb-5 pt-2 flex flex-col justify-between">
+                                    <!-- Renderizado via JS conforme lote selecionado -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL DE PRÉ-VISUALIZAÇÃO E IMPRESSÃO DE ETIQUETAS TÉRMICAS 100x50mm  -->
+    <!-- ===================================================================== -->
+    <div id="print-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between no-print">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-print text-blue-600"></i>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm">Impressão Térmica FIFO/PEPS</h3>
+                        <p class="text-[11px] text-slate-500">Formato padrão 100mm — 50mm</p>
+                    </div>
+                </div>
+                <button onclick="closePrintModal()" class="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Área Imprimível -->
+            <div id="print-area" class="p-6 max-h-[65vh] overflow-y-auto space-y-4 bg-slate-100">
+                <!-- Etiquetas térmicas geradas aqui -->
+            </div>
+
+            <div class="px-6 py-4 bg-white border-t border-slate-200 flex justify-end gap-3 no-print">
+                <button onclick="closePrintModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                    Fechar
+                </button>
+                <button onclick="window.print()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md flex items-center gap-2 transition cursor-pointer">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Imprimir Agora</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- LÓGICA JAVASCRIPT & ESTADO GLOBAL PLUGÁVEL (window.WMS_STORE)         -->
+    <!-- ===================================================================== -->
+        <script src="vendor/zxing-library.min.js"></script>
+        <script src="app.js"></script>
+</body>
+</html>
