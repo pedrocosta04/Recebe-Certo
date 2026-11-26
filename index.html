@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard atualizado - Visão Executiva</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --border: #e2e8f0;
+      --shadow: 0 4px 16px rgb(15 23 42 / 5%);
+    }
+    * { box-sizing: border-box; font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px 20px 28px; }
+    
+    /* Layout Padrão */
+    .header { margin-bottom: 14px; }
+    .header h1 { margin: 0; font-size: 22px; color: #0f172a; font-weight: 900; letter-spacing: -0.02em; }
+    
+    /* Abas */
+    .tabs { display: flex; gap: 8px; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    .tab { padding: 9px 14px; background: #ffffff; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; border-radius: 10px; font-size: 12px; font-weight: 700; transition: 0.2s ease; }
+    .tab:hover { color: var(--accent); border-color: #bfdbfe; }
+    .tab.active { background: var(--accent); color: #ffffff; border-color: var(--accent); font-weight: 800; box-shadow: 0 6px 14px rgb(37 99 235 / 16%); }
+    
+    /* Filtros */
+    .filters { display: flex; gap: 12px; flex-wrap: wrap; background: var(--card); padding: 14px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; box-shadow: var(--shadow); }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .filter-group label { font-size: 11px; color: var(--text-muted); font-weight: 700; }
+    .filter-group select { background: #f8fafc; color: var(--text); border: 1px solid #cbd5e1; padding: 8px 10px; border-radius: 9px; min-width: 120px; outline: none; font-size: 12px; font-weight: 600; }
+    .filter-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(37 99 235 / 10%); }
+    
+    /* KPIs Globais */
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .kpi-card { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); box-shadow: var(--shadow); }
+    .kpi-title { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 700; }
+    .kpi-value { font-size: 22px; font-weight: 900; color: #0f172a; }
+    .kpi-sub { font-size: 10px; margin-top: 5px; color: #059669; font-weight: 700; }
+    
+    /* Gráficos e Tabelas */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .card { background: var(--card); padding: 14px; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+    .card h3 { margin: 0 0 12px 0; font-size: 13px; color: #334155; border-bottom: 1px solid var(--border); padding-bottom: 9px; font-weight: 800; }
+    .chart-container { position: relative; height: 250px; width: 100%; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 700; background: #f8fafc; }
+    td { color: #334155; }
+    tbody tr:hover { background: #f8fafc; }
+    
+    /* Alertas */
+    .alert-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .alert-item:last-child { border: none; }
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .badge.red { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+    .badge.yellow { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+    .badge.green { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; }
+
+    @media (max-width: 900px) {
+      .grid-2,
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 12px; }
+      .tabs { overflow-x: auto; }
+      .tab { white-space: nowrap; }
+      .filters { display: grid; grid-template-columns: 1fr 1fr; }
+      .filter-group select { min-width: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Dashboard TCC: Mercado Guape - Simulação de Ganhos</h1>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active">Visão Executiva</button>
+    <button class="tab">Operacional / Qualidade</button>
+    <button class="tab">Financeiro</button>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>Setor</label>
+      <select id="fs"></select>
+    </div>
+    <div class="filter-group">
+      <label>Período - de</label>
+      <select id="fa"></select>
+    </div>
+    <div class="filter-group">
+      <label>Período - até</label>
+      <select id="fb"></select>
+    </div>
+    <div class="filter-group">
+      <label>Indicador (Gráfico de Evolução)</label>
+      <select id="fi"></select>
+    </div>
+  </div>
+
+  <div class="kpis" id="kp"></div>
+
+  <!-- Primeira Linha de Gráficos -->
+  <div class="grid-2">
+    <div class="card">
+      <h3 id="t1">Gráfico 1</h3>
+      <div class="chart-container"><canvas id="c1"></canvas></div>
+    </div>
+    <div class="card">
+      <h3 id="t2">Gráfico 2</h3>
+      <div class="chart-container"><canvas id="c2"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Segunda Linha de Gráficos -->
+  <div class="grid-3">
+    <div class="card">
+      <h3 id="t3">Gráfico 3</h3>
+      <div class="chart-container"><canvas id="c3"></canvas></div>
+    </div>
+    <div class="card">
+      <h3 id="t4">Gráfico 4</h3>
+      <div class="chart-container"><canvas id="c4"></canvas></div>
+    </div>
+    <div class="card">
+      <h3 id="t7">Evolução do indicador</h3>
+      <div class="chart-container"><canvas id="c7"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Tabelas e Alertas -->
+  <div class="grid-2">
+    <div class="card">
+      <h3 id="t5">Tabela 1</h3>
+      <div style="overflow-x:auto;">
+        <table id="tbl1">
+          <thead><tr id="th1"></tr></thead>
+          <tbody id="tb1"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3 id="t6">Tabela 2</h3>
+      <div id="divAlerts"></div>
+      <div style="overflow-x:auto;" id="divTbl2">
+        <table id="tbl2">
+          <thead><tr id="th2"></tr></thead>
+          <tbody id="tb2"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Principal -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  
+  <script>
+    // DADOS SIMULADOS - ANO DE 2026 (AS-IS: Jan-Jun | TO-BE: Jul-Dez)
+    const D = {
+      setores: ["Todos", "Açougue", "Hortifruti", "Frios e Laticínios", "Padaria", "Mercearia"],
+      pesosSetor: {
+        "Todos": 1.0,
+        "Açougue": 0.349,
+        "Hortifruti": 0.248,
+        "Frios e Laticínios": 0.217,
+        "Padaria": 0.116,
+        "Mercearia": 0.070
+      },
+      datas: ["Jan/26","Fev/26","Mar/26","Abr/26","Mai/26","Jun/26","Jul/26","Ago/26","Set/26","Out/26","Nov/26","Dez/26"],
+      inds: [
+        "Índice de Perda Geral (%)",
+        "Perda por Vencimento (R$)",
+        "Perda por Avaria (R$)",
+        "Trocas Bonificadas (%)",
+        "Taxa de Descarte (Kg)",
+        "Ganho Financeiro Líquido (R$)"
+      ],
+      qlt: {
+        Total_Perdas_Kg: [280, 290, 275, 260, 265, 250, 245, 230, 220, 210, 205, 200],
+        Descarte_RS: [3500, 3600, 3450, 3300, 3350, 3100, 3050, 2900, 2800, 2700, 2650, 2550],
+        Fornecedor_Nota: [4.1, 4.2, 4.1, 4.3, 4.4, 4.5, 4.5, 4.6, 4.7, 4.7, 4.8, 4.8],
+        Temperatura_Ocorrencias: [12, 14, 10, 8, 9, 6, 5, 4, 4, 3, 2, 2],
+        Treinamento_Horas: [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65],
+        Indice_Perda_Pct: [4.8, 4.9, 4.6, 4.4, 4.3, 4.2, 3.6, 3.2, 2.9, 2.6, 2.4, 2.2],
+        Trocas_Bonificadas_Pct: [12, 13, 14, 15, 16, 18, 28, 35, 42, 48, 52, 55],
+        Setores_Perda_Kg: [55, 45, 60, 20, 15],
+        Ocorrencias_Top5: [
+          {m: "Falta de energia", v: 45}, {m: "Equip. quebrado", v: 30},
+          {m: "Erro proc.", v: 25}, {m: "Temp. inadequada", v: 20}, {m: "Outros", v: 10}
+        ]
+      },
+      fin: {
+        // PERDA EVITADA: 6 meses AS-IS (0 ganho), depois implantação em Jul/26
+        Perda_Evitada_RS: [0, 0, 0, 0, 0, 0, 1675.0, 2829.0, 3305.0, 3731.0, 3987.0, 4093.0],
+        Vencimento_RS: [4500, 4600, 4200, 4000, 3900, 3800, 3500, 3200, 3000, 2800, 2600, 2400],
+        Avaria_RS: [2100, 2200, 2000, 1900, 1850, 1750, 1600, 1500, 1400, 1300, 1200, 1150],
+        Meta_Vencimento: [4000, 4000, 4000, 4000, 4000, 4000, 3000, 3000, 3000, 3000, 3000, 3000],
+        Investimento_Trein: [500, 500, 500, 500, 500, 500, 800, 800, 800, 800, 800, 800],
+        Retorno_Investimento: [0, 0, 0, 0, 0, 0, 875.0, 2029.0, 2505.0, 2931.0, 3187.0, 3293.0],
+        Setores_Ganho_RS: [4500, 3200, 2800, 1500, 900],
+        Fornecedores_Top5_RS: [
+          {f: "Forn. Carnes A", v: 1200, s: "Açougue"},
+          {f: "Forn. Laticínios B", v: 950, s: "Frios e Laticínios"},
+          {f: "Forn. Hortifruti C", v: 800, s: "Hortifruti"},
+          {f: "Forn. Bebidas D", v: 450, s: "Mercearia"},
+          {f: "Forn. Grãos E", v: 300, s: "Padaria"}
+        ]
+      },
+      alertas: [
+        {msg: "Lote Laticínios B vence em 2 dias", t: "red", s: "Frios e Laticínios"},
+        {msg: "Descarte Hortifruti acima da meta (5%)", t: "yellow", s: "Hortifruti"},
+        {msg: "Açougue atingiu meta de redução de perdas!", t: "green", s: "Açougue"}
+      ]
+    };
+
+    const fmtRS = v => "R$ " + v.toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const fmtKg = v => v.toLocaleString("pt-BR", {maximumFractionDigits: 1}) + " Kg";
+    const fmtPct = v => v.toFixed(1).replace(".",",") + "%";
+    
+    // Controle de estado
+    let charts = {};
+    let curTab = 0; // 0=Executiva, 1=Qlt, 2=Fin
+
+    function destroyChart(id) {
+      if(charts[id]) { charts[id].destroy(); delete charts[id]; }
+    }
+
+    // Inicializar Filtros
+    try {
+      const fs = document.getElementById("fs");
+      const fa = document.getElementById("fa");
+      const fb = document.getElementById("fb");
+      const fi = document.getElementById("fi");
+      
+      D.setores.forEach(s => fs.add(new Option(s, s)));
+      D.datas.forEach((d, i) => {
+        fa.add(new Option(d, i));
+        fb.add(new Option(d, i));
+      });
+      fb.value = D.datas.length - 1; // Último mês
+      D.inds.forEach((d, i) => fi.add(new Option(d, i)));
+      
+      [fs, fa, fb, fi].forEach(el => el.addEventListener("change", renderAll));
+    } catch(err) {
+      console.error("Erro ao inicializar filtros:", err);
+    }
+
+    // Abas
+    const tabs = document.querySelectorAll(".tab");
+    tabs.forEach((t, i) => {
+      t.addEventListener("click", () => {
+        tabs.forEach(x => x.classList.remove("active"));
+        t.classList.add("active");
+        curTab = i;
+        renderAll();
+      });
+    });
+
+    // Helper para escalar arrays pelo setor selecionado
+    function scaleArr(arr, mult, roundInt = false) {
+      return arr.map(v => roundInt ? Math.round(v * mult) : Number((v * mult).toFixed(2)));
+    }
+
+    // Renderizar Tudo
+    function renderAll() {
+      try {
+        const hasChart = typeof Chart !== 'undefined';
+        const setorSel = document.getElementById("fs").value;
+        const mult = D.pesosSetor[setorSel] || 1.0;
+        const iA = parseInt(document.getElementById("fa").value);
+        const iB = parseInt(document.getElementById("fb").value);
+        if(iA > iB) return; // Inválido
+        
+        const L = D.datas.slice(iA, iB + 1); // Labels X
+        const sufixoSetor = setorSel === "Todos" ? "" : ` (${setorSel})`;
+
+        // Séries filtradas por período e setor
+        const vencSlice = scaleArr(D.fin.Vencimento_RS.slice(iA, iB+1), mult);
+        const avariaSlice = scaleArr(D.fin.Avaria_RS.slice(iA, iB+1), mult);
+        const metaVencSlice = scaleArr(D.fin.Meta_Vencimento.slice(iA, iB+1), mult);
+        const ganhoSlice = scaleArr(D.fin.Perda_Evitada_RS.slice(iA, iB+1), mult);
+        const retornoSlice = scaleArr(D.fin.Retorno_Investimento.slice(iA, iB+1), mult);
+        const kgSlice = scaleArr(D.qlt.Total_Perdas_Kg.slice(iA, iB+1), mult, true);
+        const tempSlice = scaleArr(D.qlt.Temperatura_Ocorrencias.slice(iA, iB+1), Math.max(0.25, mult), true);
+        const treinSlice = scaleArr(D.qlt.Treinamento_Horas.slice(iA, iB+1), Math.max(0.3, mult), true);
+        const notaSlice = D.qlt.Fornecedor_Nota.slice(iA, iB+1);
+
+        // KPIs calculados dinamicamente conforme período e setor
+        const totalRS = vencSlice.reduce((a,b) => a+b, 0) + avariaSlice.reduce((a,b) => a+b, 0);
+        const totalKg = kgSlice.reduce((a,b) => a+b, 0);
+        const ganhoAcum = ganhoSlice.reduce((a,b) => a+b, 0);
+        const mesesNaMeta = vencSlice.filter((v, idx) => v <= metaVencSlice[idx]).length;
+        const metaAting = Math.round((mesesNaMeta / vencSlice.length) * 100);
+
+        const kp = document.getElementById("kp");
+        let htmlKpi = "";
+
+        if(curTab === 0 || curTab === 1) {
+           htmlKpi += `<div class="kpi-card">
+             <div class="kpi-title">Perda Total (R$)${sufixoSetor}</div>
+             <div class="kpi-value">${fmtRS(totalRS)}</div>
+             <div class="kpi-sub" style="color:#00e676">Vencimento + Avaria no período</div>
+           </div>
+           <div class="kpi-card">
+             <div class="kpi-title">Volume Descartado (Kg)${sufixoSetor}</div>
+             <div class="kpi-value">${fmtKg(totalKg)}</div>
+             <div class="kpi-sub" style="color:#00e676">Redução contínua após Jul/26</div>
+           </div>`;
+        }
+        if(curTab === 0 || curTab === 2) {
+           htmlKpi += `<div class="kpi-card">
+             <div class="kpi-title">Ganho Financeiro Líquido${sufixoSetor}</div>
+             <div class="kpi-value">${fmtRS(ganhoAcum)}</div>
+             <div class="kpi-sub" style="color:#00e676">Economia acumulada (TO-BE)</div>
+           </div>
+           <div class="kpi-card">
+             <div class="kpi-title">Meses Dentro da Meta</div>
+             <div class="kpi-value">${metaAting}%</div>
+             <div class="kpi-sub" style="color:#00e676">${mesesNaMeta} de ${vencSlice.length} meses no período</div>
+           </div>`;
+        }
+        kp.innerHTML = htmlKpi;
+
+        // Gráficos e Tabelas Baseados na Aba
+        [1,2,3,4,7].forEach(destroyChart);
+        
+        document.getElementById("divAlerts").style.display = "none";
+        document.getElementById("divTbl2").style.display = "block";
+
+        if(hasChart) {
+            Chart.defaults.color = "#64748b";
+            Chart.defaults.borderColor = "#e2e8f0";
+            Chart.defaults.font.family = "'Inter', 'Segoe UI', Arial, sans-serif";
+            Chart.defaults.font.size = 11;
+        }
+
+        if(curTab === 0) {
+          // ABA 0: VISÃO EXECUTIVA
+          document.getElementById("t1").innerText = "Total de Perdas (R$) x Meta" + sufixoSetor;
+          document.getElementById("t2").innerText = "Descarte (Kg) x Ganho Financeiro" + sufixoSetor;
+          document.getElementById("t3").innerText = "Perdas por Setor (R$)";
+          document.getElementById("t4").innerText = "Causas de Perdas (%)" + sufixoSetor;
+          document.getElementById("t5").innerText = "Top Setores Críticos (R$)";
+          document.getElementById("t6").innerText = "Alertas Recentes" + sufixoSetor;
+
+          if(hasChart) {
+              charts[1] = new Chart(document.getElementById("c1"), {
+                type: 'bar',
+                data: {
+                  labels: L,
+                  datasets: [
+                    { label: 'Perda Vencimento (R$)', data: vencSlice, backgroundColor: '#ff4d4d' },
+                    { label: 'Meta', data: metaVencSlice, type: 'line', borderColor: '#00d2ff', fill: false }
+                  ]
+                }
+              });
+
+              charts[2] = new Chart(document.getElementById("c2"), {
+                type: 'line',
+                data: {
+                  labels: L,
+                  datasets: [
+                    { label: 'Descarte (Kg)', data: kgSlice, borderColor: '#ffa726', yAxisID: 'y' },
+                    { label: 'Ganho Financeiro (R$)', data: ganhoSlice, borderColor: '#00e676', yAxisID: 'y1' }
+                  ]
+                },
+                options: {
+                  scales: { y: { type: 'linear', position: 'left' }, y1: { type: 'linear', position: 'right' } }
+                }
+              });
+
+              // Destaca o setor selecionado no gráfico de rosca
+              const bgColors = ['#ff4d4d','#ffa726','#29b6f6','#66bb6a','#ab47bc'];
+              const setorColors = D.setores.slice(1).map((s, idx) => 
+                (setorSel === "Todos" || setorSel === s) ? bgColors[idx] : '#3f3f5a'
+              );
+
+              charts[3] = new Chart(document.getElementById("c3"), {
+                type: 'doughnut',
+                data: {
+                  labels: D.setores.slice(1),
+                  datasets: [{ data: D.fin.Setores_Ganho_RS, backgroundColor: setorColors }]
+                }
+              });
+
+              charts[4] = new Chart(document.getElementById("c4"), {
+                type: 'pie',
+                data: {
+                  labels: D.qlt.Ocorrencias_Top5.map(o => o.m),
+                  datasets: [{ data: D.qlt.Ocorrencias_Top5.map(o => Math.max(1, Math.round(o.v * mult))), backgroundColor: ['#ef5350','#ffca28','#42a5f5','#81c784','#bdbdbd'] }]
+                }
+              });
+          }
+
+          // Tabela 1: Setores
+          document.getElementById("th1").innerHTML = "<th>Setor</th><th>Perda (R$)</th><th>% do Total</th>";
+          let totalS = D.fin.Setores_Ganho_RS.reduce((a,b)=>a+b, 0);
+          document.getElementById("tb1").innerHTML = D.setores.slice(1)
+            .map((s, idx) => ({s, v: D.fin.Setores_Ganho_RS[idx] || 0}))
+            .filter(item => setorSel === "Todos" || item.s === setorSel)
+            .map(item => {
+              let p = totalS ? (item.v/totalS*100) : 0;
+              return `<tr><td>${item.s}</td><td>${fmtRS(item.v)}</td><td>${fmtPct(p)}</td></tr>`;
+            }).join("");
+
+          // Alertas
+          document.getElementById("divTbl2").style.display = "none";
+          document.getElementById("divAlerts").style.display = "block";
+          const alertasFilt = D.alertas.filter(a => setorSel === "Todos" || a.s === setorSel);
+          document.getElementById("divAlerts").innerHTML = alertasFilt.length ? alertasFilt.map(a => 
+            `<div class="alert-item">
+              <span>${a.msg}</span>
+              <span class="badge ${a.t}">${a.s}</span>
+            </div>`
+          ).join("") : `<div class="alert-item"><span>Nenhum alerta crítico ativo para ${setorSel}.</span><span class="badge green">OK</span></div>`;
+          
+        } else if (curTab === 1) {
+          // ABA 1: QLT
+          document.getElementById("t1").innerText = "Evolução do Descarte (Kg)" + sufixoSetor;
+          document.getElementById("t2").innerText = "Nota de Avaliação de Fornecedores";
+          document.getElementById("t3").innerText = "Ocorrências de Temperatura" + sufixoSetor;
+          document.getElementById("t4").innerText = "Horas de Treinamento da Equipe" + sufixoSetor;
+          document.getElementById("t5").innerText = "Top 5 Causas de Descarte" + sufixoSetor;
+          document.getElementById("t6").innerText = "Descarte por Setor (Kg)";
+
+          if(hasChart) {
+              charts[1] = new Chart(document.getElementById("c1"), {
+                type: 'bar',
+                data: { labels: L, datasets: [{ label: 'Descarte (Kg)', data: kgSlice, backgroundColor: '#ffa726' }] }
+              });
+
+              charts[2] = new Chart(document.getElementById("c2"), {
+                type: 'line',
+                data: { labels: L, datasets: [{ label: 'Nota Média', data: notaSlice, borderColor: '#29b6f6', fill: true, backgroundColor: '#29b6f620' }] }
+              });
+
+              charts[3] = new Chart(document.getElementById("c3"), {
+                type: 'bar',
+                data: { labels: L, datasets: [{ label: 'Quedas de Temp.', data: tempSlice, backgroundColor: '#ef5350' }] }
+              });
+
+              charts[4] = new Chart(document.getElementById("c4"), {
+                type: 'line',
+                data: { labels: L, datasets: [{ label: 'Horas Treinamento', data: treinSlice, borderColor: '#66bb6a', fill: true, backgroundColor: '#66bb6a20' }] }
+              });
+          }
+
+          document.getElementById("th1").innerHTML = "<th>Causa</th><th>Volume Acumulado</th>";
+          document.getElementById("tb1").innerHTML = D.qlt.Ocorrencias_Top5.map(o => `<tr><td>${o.m}</td><td>${Math.max(1, Math.round(o.v * mult))} ocorrências</td></tr>`).join("");
+
+          document.getElementById("th2").innerHTML = "<th>Setor</th><th>Descarte (Kg)</th>";
+          document.getElementById("tb2").innerHTML = D.setores.slice(1)
+            .map((s, idx) => ({s, kg: D.qlt.Setores_Perda_Kg[idx]||0}))
+            .filter(item => setorSel === "Todos" || item.s === setorSel)
+            .map(item => `<tr><td>${item.s}</td><td>${fmtKg(item.kg)}</td></tr>`).join("");
+
+        } else if (curTab === 2) {
+          // ABA 2: FIN
+          document.getElementById("t1").innerText = "Perdas por Vencimento (R$/mês) × Meta" + sufixoSetor;
+          document.getElementById("t2").innerText = "Ganho líquido mensal e acumulado (R$)" + sufixoSetor;
+          document.getElementById("t3").innerText = "Avaria Mensal (R$)" + sufixoSetor;
+          document.getElementById("t4").innerText = "Retorno sobre Investimento em Treinamento (R$)" + sufixoSetor;
+          document.getElementById("t5").innerText = "Detalhamento de Perdas (R$)" + sufixoSetor;
+          document.getElementById("t6").innerText = "Top Fornecedores com Maior Impacto (R$)";
+
+          if(hasChart) {
+              charts[1] = new Chart(document.getElementById("c1"), {
+                type: 'bar',
+                data: {
+                  labels: L,
+                  datasets: [
+                    { label: 'Realizado (R$)', data: vencSlice, backgroundColor: '#ef5350' },
+                    { label: 'Meta (R$)', data: metaVencSlice, type: 'line', borderColor: '#00d2ff', fill: false }
+                  ]
+                }
+              });
+
+              let acc = [];
+              let sum = 0;
+              ganhoSlice.forEach(v => { sum += v; acc.push(Number(sum.toFixed(2))); });
+
+              charts[2] = new Chart(document.getElementById("c2"), {
+                type: 'bar',
+                data: {
+                  labels: L,
+                  datasets: [
+                    { label: 'Mensal (R$)', data: ganhoSlice, backgroundColor: '#42a5f5' },
+                    { label: 'Acumulado (R$)', data: acc, type: 'line', borderColor: '#66bb6a', fill: false }
+                  ]
+                }
+              });
+
+              charts[3] = new Chart(document.getElementById("c3"), {
+                type: 'bar',
+                data: { labels: L, datasets: [{ label: 'Avaria (R$)', data: avariaSlice, backgroundColor: '#ffca28' }] }
+              });
+
+              charts[4] = new Chart(document.getElementById("c4"), {
+                type: 'line',
+                data: { labels: L, datasets: [{ label: 'Retorno (R$)', data: retornoSlice, borderColor: '#ab47bc', fill: true, backgroundColor: '#ab47bc20' }] }
+              });
+          }
+
+          document.getElementById("th1").innerHTML = "<th>Mês</th><th>Vencimento</th><th>Avaria</th><th>Total</th>";
+          let htmlTb1 = "";
+          L.forEach((m, idx) => {
+             let venc = vencSlice[idx];
+             let ava = avariaSlice[idx];
+             htmlTb1 += `<tr><td>${m}</td><td>${fmtRS(venc)}</td><td>${fmtRS(ava)}</td><td>${fmtRS(venc+ava)}</td></tr>`;
+          });
+          document.getElementById("tb1").innerHTML = htmlTb1;
+
+          document.getElementById("th2").innerHTML = "<th>Fornecedor</th><th>Setor</th><th>Impacto (R$)</th>";
+          const fornFilt = D.fin.Fornecedores_Top5_RS.filter(f => setorSel === "Todos" || f.s === setorSel);
+          document.getElementById("tb2").innerHTML = fornFilt.length 
+            ? fornFilt.map(f => `<tr><td>${f.f}</td><td>${f.s}</td><td>${fmtRS(f.v)}</td></tr>`).join("")
+            : `<tr><td colspan="3">Sem fornecedores críticos cadastrados para ${setorSel}</td></tr>`;
+        }
+
+        // EVOLUÇÃO INDICADOR (C7) - DADOS REAIS DA SIMULAÇÃO
+        if(hasChart) {
+            let indIdx = parseInt(document.getElementById("fi").value);
+            let indName = D.inds[indIdx];
+            document.getElementById("t7").innerText = "Evolução: " + indName + sufixoSetor;
+
+            let realData = [];
+            let corLinha = '#00d2ff';
+            if(indIdx === 0) {
+              realData = D.qlt.Indice_Perda_Pct.slice(iA, iB+1);
+              corLinha = '#ff4d4d';
+            } else if(indIdx === 1) {
+              realData = vencSlice;
+              corLinha = '#ef5350';
+            } else if(indIdx === 2) {
+              realData = avariaSlice;
+              corLinha = '#ffca28';
+            } else if(indIdx === 3) {
+              realData = D.qlt.Trocas_Bonificadas_Pct.slice(iA, iB+1);
+              corLinha = '#29b6f6';
+            } else if(indIdx === 4) {
+              realData = kgSlice;
+              corLinha = '#ffa726';
+            } else if(indIdx === 5) {
+              realData = ganhoSlice;
+              corLinha = '#00e676';
+            }
+
+            charts[7] = new Chart(document.getElementById("c7"), {
+              type: 'line',
+              data: {
+                labels: L,
+                datasets: [{
+                  label: indName,
+                  data: realData,
+                  borderColor: corLinha,
+                  fill: true,
+                  backgroundColor: corLinha + '20',
+                  tension: 0.2
+                }]
+              }
+            });
+        }
+
+      } catch(err) {
+        console.error("Erro na renderização:", err);
+      }
+    }
+
+    setTimeout(renderAll, 100);
+  </script>
+</body>
+</html>
